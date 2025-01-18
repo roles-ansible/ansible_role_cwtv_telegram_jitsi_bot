@@ -16,4 +16,4 @@
     state: 'started'
     daemon_reload: true
     enabled: true
- notify: 'systemctl restart cwtv_telegram_bot.service'
+  notify: 'systemctl restart cwtv_telegram_bot.service'
