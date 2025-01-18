@@ -7,3 +7,4 @@
     owner: 'cwtv_telegram_bot'
     group: 'cwtv_telegram_bot'
     mode: '0750'
+  notify: 'systemctl restart cwtv_telegram_bot.service'
