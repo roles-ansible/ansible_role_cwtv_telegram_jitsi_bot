@@ -3,3 +3,11 @@
   ansible.builtin.include_tasks:
     file: 'versioncheck.yml'
   when: submodules_versioncheck | bool
+
+- name: Create cwtv_telegram_bot user
+  ansible.builtin.include_tasks:
+    file: 'user.yml'
+
+- name: Create telegram script
+  ansible.builtin.include_tasks:
+    file: 'bot.yml'

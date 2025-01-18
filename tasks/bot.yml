@@ -1,0 +1,9 @@
+---
+- name: Copy telegram script to server
+  become: true
+  ansible.builtin.template:
+    src: 'templates/cwtv_bot.py.j2'
+    dest: '/opt/cwtv_bot.py'
+    owner: 'cwtv_telegram_bot'
+    group: 'cwtv_telegram_bot'
+    mode: '0750'

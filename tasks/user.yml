@@ -1,0 +1,16 @@
+---
+- name: Create group for cwtv_telegram_bot
+  become: true
+  ansible.builtin.group:
+    name: 'cwtv_telegram_bot'
+    state: present
+
+- name: Add user for cwtv_telegram_bot with disabled password
+  become: true
+  ansible.builtin.user:
+    name: 'cwtv_telegram_bot'
+    group: 'cwtv_telegram_bot'
+    password: '!'
+    create_home: false
+    system: true
+    shell: '/bin/bash'

@@ -1,3 +1,7 @@
 ---
+l3d_cwtv_telegram_bot__token: ''
+l3d_cwtv_telegram_bot__channel_id: ''
+l3d_cwtv_telegram_bot__thread_id: ''
+
 # should we do a version check? (recomended)
 submodules_versioncheck: false

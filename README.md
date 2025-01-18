@@ -2,6 +2,6 @@
 [![BSD-3 Clause](https://ansible.l3d.space/svg/$namespace.$role_license.svg)](LICENSE)
 [![Maintainance](https://ansible.l3d.space/svg/$namespace.$role_maintainance.svg)](https://ansible.l3d.space/#$namespace.$role)
 
- ansible_role_template
+ ansible role CWTV Telegram Jitsi bot
 =======================
-Template for Ansible roles
+Work in Progress ansible role for a Chaoswest.TV Jitsi Telegram bot...

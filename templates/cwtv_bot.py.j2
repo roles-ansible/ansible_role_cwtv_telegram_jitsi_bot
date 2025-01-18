@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+python script to check jitsi status
+and send them to telegram
+written by L3D <l3d@c3woc.de>
+"""
+import time
+import logging
+import random
+import requests
+
+# Konfiguriere Logging für Debugging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Hole den Bot-Token und die Chat-ID aus Umgebungsvariablen
+
+TELEGRAM_BOT_TOKEN = '{{ l3d_cwtv_telegram_bot__token }}'
+TELEGRAM_CHAT_ID = '{{ l3d_cwtv_telegram_bot__channel_id }}'
+THREAD_ID = '{{ l3d_cwtv_telegram_bot__thread_id }}'
+ROOM_ID = 'cws-lounge@muc.meet.jitsi'
+LAST_OPEN_ID = None
+LAST_OPEN_DATE = None
+LAST_CLOSED_DATE = None
+LAST_CLOSED_ID = None
+welcome_messages = [
+    "Jitsi ist offen.\nhttps://talk.chaoswest.tv/CWS-Lounge 🎉",
+    "Jitsi ist offen!\nhttps://talk.chaoswest.tv/CWS-Lounge 🎉",
+    "Jitsi ist offen!\nKomm vorbei auf https://talk.chaoswest.tv/CWS-Lounge 😊",
+    "Jitsi ist offen!\nKomm vorbei: https://talk.chaoswest.tv/CWS-Lounge 😊",
+    "Jitsi ist offen!\nKomm vorbei: https://talk.chaoswest.tv/CWS-Lounge",
+    "🚀 https://talk.chaoswest.tv/CWS-Lounge hat geöffnet",
+    "Spektakuläres erleben.\nJetzt live und in farbe auf https://talk.chaoswest.tv/CWS-Lounge 🥳",
+    "something something https://talk.chaoswest.tv/CWS-Lounge ist offen...",
+    "Jitsi.\nJetzt\nhttps://talk.chaoswest.tv/CWS-Lounge"
+]
+jitsi_closed = [
+    "Jitsi ist wieder zu",
+    "Jitsi müde, Jitsi schlafen",
+    "Zu spät. Jitsi wieder zu",
+    "Jitsi ist geschlossen",
+    "nicht mehr. Jitsi zu jetzt",
+    "Das Jitsi-Meeting ist jetzt geschlossen. Vielen Dank für deine Teilnahme! 👋",
+    "Das Meeting auf Jitsi ist beendet. Bis zum nächsten Mal! 🚪",
+    "Das virtuelle Treffen ist zu Ende. Wir sehen uns beim nächsten Mal auf Jitsi! 👀",
+    "Das Jitsi-Meeting wurde geschlossen. Es war großartig, mit dir zu sprechen! 🙌",
+    "Das Meeting ist jetzt vorbei. Wir hoffen, dich bald wieder auf Jitsi zu sehen! 😊",
+    "Das Jitsi-Meeting ist geschlossen. Danke für deine Zeit! 🕔",
+    "Das virtuelle Treffen wurde beendet. Bleib gesund und bis bald! 🌟",
+    "Das Jitsi-Meeting ist jetzt offiziell zu Ende. Auf Wiedersehen! 🖐️",
+]
+
+# pylint: disable=redefined-outer-name,too-many-branches
+def check_room_status(url, interval):
+    """
+    Here the jitsi room status (hardcoded) will be checked
+    """
+    cwtv_open = False
+    logging.info('Scanning for rooms...')
+    # pylint: disable=too-many-nested-blocks
+    while True:
+        try:
+            # Abrufen der JSON-Daten von der URL
+            response = requests.get(url, timeout=8)
+            response.raise_for_status()
+
+            data = response.json()
+
+            # Überprüfen, ob der Raum offen oder geschlossen ist
+            rooms = data.get("room_census", [])
+            for room in rooms:
+                room_name = room.get("room_name")
+                if room_name is ROOM_ID:
+                    if cwtv_open is False:
+                        cwtv_open = True
+                        success = send_tlgm_msg(random.choice(welcome_messages), is_open=True)
+                        if success:
+                            # pylint: disable=line-too-long
+                            logging.info("Die Nachricht wurde erfolgreich an die send_telegtam_mesage Funktion übergeben.")
+                        else:
+                            logging.error("Fehler aus der send_tlgm_msg Funktion.")
+
+            if cwtv_open is True:
+                if rooms == []:
+                    success = send_tlgm_msg("Jitsi closed", False)
+                    if success:
+                        # pylint: disable=line-too-long
+                        logging.info("Die Nachricht wurde erfolgreich an die send_telegtam_mesage Funktion übergeben.")
+                    else:
+                        logging.error("Fehler aus der send_tlgm_msg Funktion.")
+                    cwtv_open = False
+                else:
+                    found = False
+                    for room in rooms:
+                        room_name = room.get("room_name")
+                        if room_name is ROOM_ID:
+                            found = True
+                        else:
+                            pass
+                    if found is False:
+                        logging.info("CWS-Lounge room closed")
+                        success = send_tlgm_msg(random.choice(jitsi_closed), False)
+                        if success:
+                        # pylint: disable=line-too-long
+                            logging.info("Die Nachricht wurde erfolgreich an die send_telegtam_mesage Funktion übergeben.")
+                        else:
+                            logging.error("Fehler aus der send_tlgm_msg Funktion.")
+                        cwtv_open = False
+        except requests.exceptions.RequestException as e:
+            print(f"Fehler beim Abrufen der Daten: {e}")
+
+        # Warten für das angegebene Intervall
+        time.sleep(interval)
+
+def send_tlgm_msg(message: str, is_open: bool) -> bool:
+    """
+    Sendet eine Nachricht an einen Telegram-Kanal.
+
+    Args:
+        message (str): Die Nachricht, die gesendet werden soll.
+
+    Returns:
+        bool: True, wenn die Nachricht erfolgreich gesendet wurde, sonst False.
+    """
+    # pylint: disable=global-statement
+    global LAST_OPEN_DATE, LAST_OPEN_ID, LAST_CLOSED_DATE, LAST_CLOSED_ID
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "message_thread_id": THREAD_ID,
+        "text": message
+    }
+
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        # Löst eine Ausnahme aus, wenn der HTTP-Statuscode ein Fehler ist
+        response.raise_for_status()
+        logging.info("Nachricht erfolgreich gesendet: %s", message)
+        logging.info('Message-ID: %s', response.json()["result"]["message_id"])
+        if is_open is True:
+            if LAST_OPEN_DATE is not None and LAST_OPEN_ID is not None:
+                current_time = time.time()
+                if current_time - LAST_OPEN_DATE < 300:
+                    # pylint: disable=line-too-long
+                    logging.info("Recently opened Jitsi, deleting message, old message was %s sec ago.", str(current_time - LAST_OPEN_DATE))
+                    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/deleteMessage"
+                    payload = {
+                        "chat_id": TELEGRAM_CHAT_ID,
+                        "message_thread_id": THREAD_ID,
+                        "message_id": LAST_OPEN_ID
+                    }
+                    requests.post(url, json=payload, timeout=10)
+            LAST_OPEN_DATE = time.time()
+            LAST_OPEN_ID = response.json()["result"]["message_id"]
+            return True
+        if LAST_CLOSED_DATE is not None and LAST_CLOSED_ID is not None:
+            current_time = time.time()
+            if current_time - LAST_OPEN_DATE < 300:
+                # pylint: disable=line-too-long
+                logging.info("Recently closed Jitsi, deleting message, old message was %s sec ago.", str(current_time - LAST_OPEN_DATE))
+                url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/deleteMessage"
+                payload = {
+                    "chat_id": TELEGRAM_CHAT_ID,
+                    "message_thread_id": THREAD_ID,
+                    "message_id": LAST_CLOSED_ID
+                }
+                requests.post(url, json=payload, timeout=10)
+        LAST_CLOSED_DATE = time.time()
+        LAST_CLOSED_ID = response.json()["result"]["message_id"]
+        return True
+    except requests.exceptions.RequestException as e:
+        logging.error("Fehler beim Senden der Nachricht: %s", e)
+        return False
+
+if __name__ == "__main__":
+    JITSI_URL = "https://talk.chaoswest.tv/room-census"
+
+    # Abfrageintervall in Sekunden (z.B. alle 30 Sekunden)
+    INTERVAL = 10
+
+    # Starten der Überprüfung
+    check_room_status(JITSI_URL, INTERVAL)
