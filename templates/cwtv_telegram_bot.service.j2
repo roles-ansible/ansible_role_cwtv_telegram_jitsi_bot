@@ -1,0 +1,14 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=Systemd Service for CWTV Telegram Jitsi Status bot
+After=network.target
+
+[Service]
+User=cwtv_telegram_bot
+Group=cwtv_telegram_bot
+Type=simple
+ExecStart=/opt/cwtv_bot.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

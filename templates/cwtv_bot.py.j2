@@ -70,7 +70,7 @@ def check_room_status(url, interval):
             rooms = data.get("room_census", [])
             for room in rooms:
                 room_name = room.get("room_name")
-                if room_name is ROOM_ID:
+                if room_name == ROOM_ID:
                     if cwtv_open is False:
                         cwtv_open = True
                         success = send_tlgm_msg(random.choice(welcome_messages), is_open=True)
@@ -93,7 +93,7 @@ def check_room_status(url, interval):
                     found = False
                     for room in rooms:
                         room_name = room.get("room_name")
-                        if room_name is ROOM_ID:
+                        if room_name == ROOM_ID:
                             found = True
                         else:
                             pass

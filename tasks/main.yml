@@ -11,3 +11,7 @@
 - name: Create telegram script
   ansible.builtin.include_tasks:
     file: 'bot.yml'
+
+- name: Setup Systemd services
+  ansible.builtin.include_tasks:
+    file: 'systemd.yml'
